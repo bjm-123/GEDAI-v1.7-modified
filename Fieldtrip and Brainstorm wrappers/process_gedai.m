@@ -27,7 +27,7 @@ end
 function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.Comment     = 'GEDAI';
     sProcess.FileTag     = 'gedai';
-    sProcess.Category    = 'Custom';
+    sProcess.Category    = 'Filter';
     sProcess.SubGroup    = 'Artifacts';
     sProcess.Index       = 113.7;
     sProcess.InputTypes  = {'data', 'raw'};
@@ -144,8 +144,8 @@ end
 
 
 %% ===== RUN =====
-function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
-    OutputFiles = {};
+function sInputs = Run(sProcess, sInputs) %#ok<DEFNU>
+    % OutputFiles = {};
 
     % Check if GEDAI plugin is loaded
     PlugDesc = bst_plugin('GetDescription', 'gedai');
@@ -429,44 +429,52 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
             % Brainstorm detects raw files by checking if the filename contains 'data_0raw'.
             % If we save inside the @raw... subfolder, the path will contain 'data_0raw'
             % and Brainstorm will treat our imported file as a raw link, causing crashes.
-            sStudyOut   = bst_get('Study', sInput.iStudy);
-            StudyFolder = bst_fileparts(file_fullpath(sStudyOut.FileName));
-            CleanedFileName = bst_process('GetNewFilename', StudyFolder, 'data_gedai_cleaned');
-            bst_save(CleanedFileName, FileMatCleaned, 'v6');
-            db_add_data(sInput.iStudy, CleanedFileName, FileMatCleaned);
-            OutputFiles{end+1} = CleanedFileName;
+            % sStudyOut   = bst_get('Study', sInput.iStudy);
+            % StudyFolder = bst_fileparts(file_fullpath(sStudyOut.FileName));
+            % CleanedFileName = bst_process('GetNewFilename', StudyFolder, 'data_gedai_cleaned');
+            % bst_save(CleanedFileName, FileMatCleaned, 'v6');
+            % db_add_data(sInput.iStudy, CleanedFileName, FileMatCleaned);
+            % OutputFiles{end+1} = CleanedFileName;
 
+            sInput.A          = DataOut;
+            sInput.TimeVector = TimeOut;
+
+            sInput.Comment = ['Cleaned | ', current_comment, ' | ', gedai_params];
+
+            if isfield(sInput,'ChannelFlag')
+                sInput.ChannelFlag = ChannelFlagOut;
+            end
 
             % --- Artifacts file ---
-            if save_artifacts
-                try
-                    % Artifact data: zeros for non-EEG/MEG, artifact signal for EEG/MEG
-                    % Convert artifact data from µV back to Volts
-                    ArtifactData = zeros(nChannelsTotal, size(DataOut, 2));
-                    if size(EEGartifacts.data, 2) == size(DataOut, 2)
-                        ArtifactData(eeg_meg_idx, :) = EEGartifacts.data / 1e6;
-                    else
-                        warning('GEDAI:ArtifactDimensionMismatch', 'Artifact time dimension does not match cleaned data.');
-                    end
-
-                    FileMatArtifacts.Comment     = ['Artifacts | ', current_comment, ' | ', gedai_params];
-                    FileMatArtifacts.DataType    = 'recordings';
-                    FileMatArtifacts.Time        = TimeOut;
-                    FileMatArtifacts.F           = ArtifactData;
-                    FileMatArtifacts.ChannelFlag = ChannelFlagOut;
-                    if isfield(sInput, 'Events'),  FileMatArtifacts.Events  = sInput.Events;  end
-                    if isfield(sInput, 'History'), FileMatArtifacts.History = sInput.History; end
-
-                    ArtifactsFileName = bst_process('GetNewFilename', StudyFolder, 'data_gedai_artifacts');
-                    bst_save(ArtifactsFileName, FileMatArtifacts, 'v6');
-                    db_add_data(sInput.iStudy, ArtifactsFileName, FileMatArtifacts);
-                    OutputFiles{end+1} = ArtifactsFileName;
-
-                catch ME_Art
-                    warning('GEDAI:ArtifactSaveFailed', 'Failed to save Artifacts file: %s', ME_Art.message);
-                    disp(getReport(ME_Art));
-                end
-            end
+            % if save_artifacts
+            %     try
+            %         % Artifact data: zeros for non-EEG/MEG, artifact signal for EEG/MEG
+            %         % Convert artifact data from µV back to Volts
+            %         ArtifactData = zeros(nChannelsTotal, size(DataOut, 2));
+            %         if size(EEGartifacts.data, 2) == size(DataOut, 2)
+            %             ArtifactData(eeg_meg_idx, :) = EEGartifacts.data / 1e6;
+            %         else
+            %             warning('GEDAI:ArtifactDimensionMismatch', 'Artifact time dimension does not match cleaned data.');
+            %         end
+            % 
+            %         FileMatArtifacts.Comment     = ['Artifacts | ', current_comment, ' | ', gedai_params];
+            %         FileMatArtifacts.DataType    = 'recordings';
+            %         FileMatArtifacts.Time        = TimeOut;
+            %         FileMatArtifacts.F           = ArtifactData;
+            %         FileMatArtifacts.ChannelFlag = ChannelFlagOut;
+            %         if isfield(sInput, 'Events'),  FileMatArtifacts.Events  = sInput.Events;  end
+            %         if isfield(sInput, 'History'), FileMatArtifacts.History = sInput.History; end
+            % 
+            %         ArtifactsFileName = bst_process('GetNewFilename', StudyFolder, 'data_gedai_artifacts');
+            %         bst_save(ArtifactsFileName, FileMatArtifacts, 'v6');
+            %         db_add_data(sInput.iStudy, ArtifactsFileName, FileMatArtifacts);
+            %         OutputFiles{end+1} = ArtifactsFileName;
+            % 
+            %     catch ME_Art
+            %         warning('GEDAI:ArtifactSaveFailed', 'Failed to save Artifacts file: %s', ME_Art.message);
+            %         disp(getReport(ME_Art));
+            %     end
+            % end
 
         catch ME
             bst_report('Error', sProcess, sInput, ['GEDAI Failed: ' ME.message]);
