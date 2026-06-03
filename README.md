@@ -1,3 +1,9 @@
+## Modified items
+Optimized GEDAI as a Brainstorm plugin
+1. Never save artifact components
+2. Reform denoising output as a Brainstorm structure
+3. Save the output to a new study (new folder in Brainstorm protocol) for better signal quality review
+
 ## GEDAI denoising toolbox for Matlab (EEGLAB/Brainstorm/FieldTrip)
 
 
