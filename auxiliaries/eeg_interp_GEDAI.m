@@ -392,7 +392,7 @@ g = zeros(length(x(:)),length(xelec));
 %dsafds
 m = 4; % 3 is linear, 4 is best according to Perrin's curve
 for n = 1:7
-    if ismatlab
+    if exist('OCTAVE_VERSION','builtin')
         L = legendre(n,EI);
     else % Octave legendre function cannot process 2-D matrices
         for icol = 1:size(EI,2)
